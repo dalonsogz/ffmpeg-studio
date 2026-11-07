@@ -28,18 +28,40 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
 
+      - name: Caché de FFmpeg
+        id: ffmpeg-cache
+        uses: actions/cache@v6
+        with:
+          path: tools\ffmpeg
+          # Sube la versión del sufijo (v1 → v2) para forzar una descarga nueva.
+          key: ffmpeg-${{ runner.os }}-n9.0-gpl-v1
+
       - name: Descargar FFmpeg
+        if: steps.ffmpeg-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
-          Invoke-WebRequest "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" -OutFile ffmpeg.zip
-          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg-download
+          $ErrorActionPreference = 'Stop'
+          # Espejo de GitHub: gyan.dev limita las descargas y devuelve 503/504.
+          $url = 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n9.0-latest-win64-gpl-9.0.zip'
+          curl.exe -L --fail --retry 5 --retry-delay 10 --retry-all-errors -o ffmpeg.zip $url
+          if ($LASTEXITCODE -ne 0) {
+            throw "No se pudo descargar FFmpeg (curl salió con $LASTEXITCODE)."
+          }
+          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg-download -Force
           $bin = Get-ChildItem ffmpeg-download -Recurse -Filter ffmpeg.exe | Select-Object -First 1
           New-Item -ItemType Directory -Force -Path tools\ffmpeg\bin | Out-Null
           Copy-Item $bin.FullName tools\ffmpeg\bin\ffmpeg.exe
           Copy-Item (Join-Path $bin.DirectoryName "ffprobe.exe") tools\ffmpeg\bin\ffprobe.exe
           Get-ChildItem ffmpeg-download -Recurse -Filter LICENSE.txt | Select-Object -First 1 |
             Copy-Item -Destination tools\ffmpeg\LICENSE.txt -Force
+          Remove-Item ffmpeg.zip -Force
+          Remove-Item ffmpeg-download -Recurse -Force
+
+      - name: Configurar FFmpeg
+        shell: pwsh
+        run: |
           "FFMPEG_DIR=$PWD\tools\ffmpeg\bin" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          & tools\ffmpeg\bin\ffmpeg.exe -hide_banner -version | Select-Object -First 1
 
       - name: Crear vídeo de muestra
         shell: pwsh

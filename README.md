@@ -267,7 +267,8 @@ Qué hace el instalador:
 a mano (`workflow_dispatch`):
 
 1. Python 3.10 + dependencias.
-2. Descarga FFmpeg essentials y define `FFMPEG_DIR`.
+2. Descarga FFmpeg (espejo de GitHub, BtbN) y define `FFMPEG_DIR`. El binario se guarda en la
+   caché de Actions, así que solo se descarga la primera vez.
 3. Genera `..\.probe\media\base.mp4` para que las pruebas de integración no se omitan.
 4. `node --check web/app.js`.
 5. Las 138 pruebas.
@@ -286,6 +287,12 @@ git push -u origin main
 ```
 
 Los binarios (`dist/`, `installer/Output/`) no se suben: están en `.gitignore` y el CI los genera.
+
+**Caché de FFmpeg.** La descarga se hace una sola vez por clave de caché
+(`ffmpeg-windows-n9.0-gpl-v1`, definida en el workflow). Las ejecuciones siguientes restauran
+`tools\ffmpeg` en segundos. Se usa el espejo de GitHub (BtbN) en lugar de gyan.dev, que limita las
+descargas repetidas con errores 503/504. Para actualizar FFmpeg, cambia la URL y sube el sufijo de la
+clave (`v1` → `v2`) para invalidar la caché.
 
 ### Ejecutar el CI en local
 
