@@ -3,6 +3,7 @@ name: build
 on:
   push:
     branches: [main, master]
+  tags: ["v*"]
   pull_request:
   workflow_dispatch:
 
@@ -78,7 +79,7 @@ jobs:
 
       - name: Compilar el instalador
         shell: pwsh
-        run: .\installer\build-installer.ps1 -Version 1.0.0
+        run: .\installer\build-installer.ps1 -Version 1.0.1
 
       - name: Guardar el instalador
         uses: actions/upload-artifact@v7
@@ -86,3 +87,18 @@ jobs:
           name: FFmpegStudio-instalador
           path: installer/Output/*.exe
           compression-level: 0
+          retention-days: 7
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: windows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: FFmpegStudio-instalador
+          path: dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.exe
+

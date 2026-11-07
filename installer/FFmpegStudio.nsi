@@ -5,14 +5,14 @@
 Unicode true
 
 !ifndef APP_VERSION
-  !define APP_VERSION "1.0.0"
+  !define APP_VERSION "1.0.1"
 !endif
 
 !define APP_NAME "FFmpeg Studio"
 !define APP_EXE "FFmpegStudio.exe"
 !define APP_PUBLISHER "FFmpeg Studio"
 !define APP_ID "FFmpegStudio"
-!define APP_VERSION_4 "1.0.0.0"
+!define APP_VERSION_4 "1.0.1.0"
 
 !include "MUI2.nsh"
 
@@ -64,14 +64,18 @@ Section "$(SEC_Main)" SEC_MAIN
 
   CreateDirectory "$SMPROGRAMS\${APP_NAME}"
   CreateShortCut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
-  CreateShortCut "$SMPROGRAMS\${APP_NAME}\Desinstalar ${APP_NAME}.lnk" "$INSTDIR\uninstall.exe"
+  CreateShortCut "$SMPROGRAMS\${APP_NAME}\Desinstalar ${APP_NAME}.lnk" "$INSTDIR\uninstall.exe" "_?=$INSTDIR"
 
   WriteRegStr HKCU "Software\${APP_ID}" "InstallDir" "$INSTDIR"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}" "DisplayName" "${APP_NAME}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}" "DisplayVersion" "${APP_VERSION}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}" "Publisher" "${APP_PUBLISHER}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}" "DisplayIcon" "$INSTDIR\${APP_EXE}"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}" "UninstallString" '"$INSTDIR\uninstall.exe"'
+  ; _?=$INSTDIR evita que el desinstalador se copie a %TEMP% y se lance desde allí:
+  ; en equipos donde TEMP permite escribir pero no ejecutar, esa copia falla con
+  ; "Error launching installer". Ejecutándolo en su sitio funciona siempre.
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}" "UninstallString" '"$INSTDIR\uninstall.exe" _?=$INSTDIR'
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}" "QuietUninstallString" '"$INSTDIR\uninstall.exe" /S _?=$INSTDIR'
   WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}" "NoModify" 1
   WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}" "NoRepair" 1
 SectionEnd
@@ -86,6 +90,13 @@ Section "Uninstall"
   Delete "$SMPROGRAMS\${APP_NAME}\Desinstalar ${APP_NAME}.lnk"
   RMDir "$SMPROGRAMS\${APP_NAME}"
   RMDir /r "$INSTDIR"
+
+  ; Con _?= el desinstalador corre desde $INSTDIR y no puede borrarse a sí mismo.
+  ; Un cmd oculto espera a que termine y limpia el ejecutable y la carpeta restante.
+  Delete /REBOOTOK "$INSTDIR\uninstall.exe"
+  RMDir /REBOOTOK "$INSTDIR"
+  ExecShell "open" "cmd.exe" '/C ping -n 3 127.0.0.1 >NUL & del /F /Q "$INSTDIR\uninstall.exe" & rmdir "$INSTDIR"' SW_HIDE
+
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}"
   DeleteRegKey HKCU "Software\${APP_ID}"
 SectionEnd

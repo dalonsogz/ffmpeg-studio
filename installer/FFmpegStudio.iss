@@ -3,7 +3,7 @@
 ; Requiere que dist\FFmpegStudio esté generado con build.bat.
 
 #ifndef MyAppVersion
-  #define MyAppVersion "1.0.0"
+  #define MyAppVersion "1.0.1"
 #endif
 
 #define MyAppName "FFmpeg Studio"

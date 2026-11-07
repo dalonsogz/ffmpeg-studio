@@ -244,7 +244,7 @@ build.bat
 installer\build-installer.ps1
 ```
 
-Genera `installer\Output\FFmpegStudio-Setup-1.0.0.exe` (~100 MB comprimido, 979 archivos dentro).
+Genera `installer\Output\FFmpegStudio-Setup-1.0.1.exe` (~100 MB comprimido, 979 archivos dentro).
 Necesita **NSIS 3** (`makensis.exe`); si no está en `Program Files`, pasa `-Nsis <ruta>`. También
 puedes usar Inno Setup con `installer\build-installer.ps1 -Inno -Iscc <ruta>`.
 
@@ -286,6 +286,26 @@ git push -u origin main
 ```
 
 Los binarios (`dist/`, `installer/Output/`) no se suben: están en `.gitignore` y el CI los genera.
+
+### Ejecutar el CI en local
+
+```bat
+powershell -ExecutionPolicy Bypass -File tools\run-ci.ps1
+```
+
+Replica los pasos del workflow: dependencias, FFmpeg, muestra de pruebas, `node --check`, las 138
+pruebas, `build.bat` y el instalador. Opciones útiles:
+
+- `-Version 1.1.0`: versión del instalador.
+- `-SkipInstaller`: solo portable (más rápido).
+- `-DistPath dist-ci`: otra carpeta de salida si `dist\` está bloqueada.
+- `-ForceFixture`: regenera el vídeo y el SRT de muestra.
+- `-FfmpegDir <ruta>`: usa otro FFmpeg.
+
+`act` no sirve para este workflow: solo ejecuta runners Linux y aquí se usa `windows-latest`. Para
+ejecutar el workflow real en tu equipo habría que registrar un **self-hosted runner** y añadir
+`self-hosted` a `runs-on`; en repositorios públicos eso permite que código de terceros se ejecute en
+tu máquina, así que no es recomendable.
 
 ## Pruebas
 
