@@ -1,0 +1,10 @@
+FFmpeg Studio incluye FFmpeg (https://ffmpeg.org), distribuido bajo la licencia
+GNU General Public License v3 (GPLv3). El texto completo está en la carpeta
+"ffmpeg\LICENSE.txt" dentro de la aplicación.
+
+FFmpeg Studio es un front-end: no modifica ni relicencia FFmpeg. Si redistribuyes
+esta aplicación con FFmpeg incluido, debes cumplir la GPLv3 (ofrecer el código
+fuente correspondiente de FFmpeg, entre otras obligaciones).
+
+FFmpeg Studio guarda tus ajustes y la cola en %APPDATA%\FFmpegStudio. Al
+desinstalar, esos datos personales no se borran automáticamente.

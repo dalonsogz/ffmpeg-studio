@@ -1,0 +1,82 @@
+name: build
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Preparar Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+
+      - name: Instalar dependencias
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Descargar FFmpeg
+        shell: pwsh
+        run: |
+          Invoke-WebRequest "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" -OutFile ffmpeg.zip
+          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg-download
+          $bin = Get-ChildItem ffmpeg-download -Recurse -Filter ffmpeg.exe | Select-Object -First 1
+          New-Item -ItemType Directory -Force -Path tools\ffmpeg\bin | Out-Null
+          Copy-Item $bin.FullName tools\ffmpeg\bin\ffmpeg.exe
+          Copy-Item (Join-Path $bin.DirectoryName "ffprobe.exe") tools\ffmpeg\bin\ffprobe.exe
+          Get-ChildItem ffmpeg-download -Recurse -Filter LICENSE.txt | Select-Object -First 1 |
+            Copy-Item -Destination tools\ffmpeg\LICENSE.txt -Force
+          "FFMPEG_DIR=$PWD\tools\ffmpeg\bin" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Crear vídeo de muestra
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path ..\.probe\media | Out-Null
+          & tools\ffmpeg\bin\ffmpeg.exe -y -f lavfi -i testsrc2=size=640x360:rate=30 `
+            -f lavfi -i sine=frequency=440:sample_rate=48000 -t 3 `
+            -c:v libx264 -pix_fmt yuv420p -c:a aac ..\.probe\media\base.mp4
+
+      - name: Comprobar el JavaScript
+        run: node --check web/app.js
+
+      - name: Ejecutar las pruebas
+        shell: pwsh
+        run: python -m unittest discover -s tests -v
+
+      - name: Compilar el ejecutable
+        shell: pwsh
+        run: .\build.bat
+
+      - name: Guardar el portable
+        uses: actions/upload-artifact@v4
+        with:
+          name: FFmpegStudio-portable
+          path: dist/FFmpegStudio
+          compression-level: 0
+
+      - name: Instalar NSIS
+        shell: pwsh
+        run: choco install nsis --no-progress -y
+
+      - name: Compilar el instalador
+        shell: pwsh
+        run: .\installer\build-installer.ps1 -Version 1.0.0
+
+      - name: Guardar el instalador
+        uses: actions/upload-artifact@v4
+        with:
+          name: FFmpegStudio-instalador
+          path: installer/Output/*.exe
+          compression-level: 0

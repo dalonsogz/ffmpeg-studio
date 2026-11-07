@@ -1,0 +1,308 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-07",
+  "targetBuild": {
+    "ffmpeg": "N-128532-g5d85b7bfb2-20261106",
+    "libavcodec": "63.26.101",
+    "license": "GPLv3",
+    "platform": "win64-x64"
+  },
+  "notes": [
+    "Los campos son semánticos: la app construye los argumentos a partir de ellos (no son líneas de comando).",
+    "Los valores de filtro con comas deben ir entre comillas simples al pasarlos a -vf/-af, p. ej. scale='min(1920,iw)':-2.",
+    "Placeholders disponibles en 'extraArgs': {input}, {output}, {filename}.",
+    "Todos los presets se han validado sobre la build indicada salvo los marcados con \"verified\": false."
+  ],
+  "qualityLevels": [
+    { "id": "alta", "label": "Alta", "crfOffset": -4, "hint": "Mejor calidad, archivos más grandes" },
+    { "id": "buena", "label": "Buena", "crfOffset": 0, "hint": "Equilibrio recomendado" },
+    { "id": "compacta", "label": "Compacta", "crfOffset": 5, "hint": "Archivos pequeños, pérdida visible en escenas complejas" }
+  ],
+  "hardwareFallback": {
+    "h264_nvenc": ["h264_qsv", "h264_amf", "libx264"],
+    "hevc_nvenc": ["hevc_qsv", "hevc_amf", "libx265"],
+    "av1_nvenc": ["av1_qsv", "av1_amf", "libsvtav1"]
+  },
+  "presets": [
+    {
+      "id": "mp4-h264-web",
+      "label": "MP4 · H.264 para web",
+      "task": "convert",
+      "description": "Máxima compatibilidad: se reproduce en cualquier navegador, móvil y TV.",
+      "container": "mp4",
+      "extension": "mp4",
+      "verified": true,
+      "video": {
+        "codec": "libx264",
+        "rateControl": "crf",
+        "crf": 21,
+        "preset": "medium",
+        "pixFmt": "yuv420p",
+        "maxWidth": 1920,
+        "maxHeight": 1080
+      },
+      "audio": { "codec": "aac", "bitrate": "160k", "channels": 2 },
+      "extraArgs": ["-movflags", "+faststart"],
+      "builderNotes": "-vf scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2 (no amplía)"
+    },
+    {
+      "id": "mp4-h264-compact",
+      "label": "MP4 · Compacto (móvil / mensajería)",
+      "task": "compress",
+      "description": "720p y calidad contenida para enviar por chat o correo.",
+      "container": "mp4",
+      "extension": "mp4",
+      "verified": true,
+      "video": {
+        "codec": "libx264",
+        "rateControl": "crf",
+        "crf": 26,
+        "preset": "medium",
+        "pixFmt": "yuv420p",
+        "maxWidth": 1280,
+        "maxHeight": 720
+      },
+      "audio": { "codec": "aac", "bitrate": "96k", "channels": 2 },
+      "extraArgs": ["-movflags", "+faststart"]
+    },
+    {
+      "id": "mp4-h264-2pass-2m",
+      "label": "MP4 · H.264 2 Mbps (dos pasadas)",
+      "task": "convert",
+      "description": "Bitrate objetivo predecible; útil para cumplir un límite de tamaño.",
+      "container": "mp4",
+      "extension": "mp4",
+      "verified": true,
+      "twoPass": true,
+      "video": {
+        "codec": "libx264",
+        "rateControl": "bitrate",
+        "bitrate": "2M",
+        "preset": "medium",
+        "pixFmt": "yuv420p",
+        "maxWidth": 1920,
+        "maxHeight": 1080
+      },
+      "audio": { "codec": "aac", "bitrate": "128k" },
+      "extraArgs": ["-movflags", "+faststart"],
+      "builderNotes": "Ambas pasadas DEBEN declarar las mismas pistas (incluido audio) o la pasada 2 falla con -5 buscando <log>-1.log."
+    },
+    {
+      "id": "mp4-hevc-archive",
+      "label": "MP4 · HEVC (archivo, buena calidad)",
+      "task": "archive",
+      "description": "H.265 con ~40 % menos peso que H.264 a igual calidad. Requiere hardware/software moderno.",
+      "container": "mp4",
+      "extension": "mp4",
+      "verified": false,
+      "video": {
+        "codec": "libx265",
+        "rateControl": "crf",
+        "crf": 24,
+        "preset": "slow",
+        "pixFmt": "yuv420p",
+        "maxWidth": 3840,
+        "maxHeight": 2160
+      },
+      "audio": { "codec": "aac", "bitrate": "192k" },
+      "extraArgs": ["-tag:v", "hvc1", "-movflags", "+faststart"],
+      "builderNotes": "-tag:v hvc1 mejora la compatibilidad con reproductores Apple."
+    },
+    {
+      "id": "mp4-av1-svt",
+      "label": "MP4 · AV1 (SVT-AV1)",
+      "task": "archive",
+      "description": "Máxima eficiencia de compresión; codificación lenta en CPU.",
+      "container": "mp4",
+      "extension": "mp4",
+      "verified": false,
+      "video": {
+        "codec": "libsvtav1",
+        "rateControl": "crf",
+        "crf": 30,
+        "preset": "6",
+        "pixFmt": "yuv420p",
+        "maxWidth": 3840,
+        "maxHeight": 2160
+      },
+      "audio": { "codec": "aac", "bitrate": "160k" },
+      "extraArgs": ["-movflags", "+faststart"],
+      "builderNotes": "En libsvtav1 el parámetro -preset es numérico (0 = mejor calidad, 13 = más rápido)."
+    },
+    {
+      "id": "webm-vp9",
+      "label": "WebM · VP9 + Opus",
+      "task": "convert",
+      "description": "Formato abierto para web; sin royalties.",
+      "container": "webm",
+      "extension": "webm",
+      "verified": true,
+      "video": {
+        "codec": "libvpx-vp9",
+        "rateControl": "crf",
+        "crf": 32,
+        "pixFmt": "yuv420p",
+        "maxWidth": 1920,
+        "maxHeight": 1080
+      },
+      "audio": { "codec": "libopus", "bitrate": "96k" },
+      "extraArgs": ["-b:v", "0", "-row-mt", "1"],
+      "builderNotes": "Con VP9 y CRF hay que fijar -b:v 0; -row-mt 1 acelera el multihilo."
+    },
+    {
+      "id": "mp4-nvenc-fast",
+      "label": "MP4 · NVIDIA NVENC (rápido)",
+      "task": "convert",
+      "description": "Codificación por GPU, mucho más rápida que CPU con calidad algo inferior a igual bitrate.",
+      "container": "mp4",
+      "extension": "mp4",
+      "verified": true,
+      "requires": "nvidia",
+      "video": {
+        "codec": "h264_nvenc",
+        "rateControl": "cq",
+        "cq": 23,
+        "preset": "p5",
+        "pixFmt": "yuv420p",
+        "maxWidth": 1920,
+        "maxHeight": 1080
+      },
+      "audio": { "codec": "aac", "bitrate": "160k" },
+      "extraArgs": ["-movflags", "+faststart"],
+      "builderNotes": "Presets NVENC: p1 (más rápido) … p7 (mejor calidad). En esta máquina funcionó con p4 y -cq 23."
+    },
+    {
+      "id": "remux-copy",
+      "label": "Cambiar de contenedor sin recodificar",
+      "task": "remux",
+      "description": "Instantáneo y sin pérdida. Solo válido si el contenedor destino admite los códecs de origen.",
+      "container": "mkv",
+      "extension": "mkv",
+      "verified": true,
+      "video": { "codec": "copy" },
+      "audio": { "codec": "copy" },
+      "extraArgs": [],
+      "builderNotes": "Si el contenedor destino no admite el códec, ofrecer recodificar solo esa pista."
+    },
+    {
+      "id": "audio-mp3-192",
+      "label": "Audio · MP3 192 kbps",
+      "task": "extract-audio",
+      "description": "Compatible con cualquier reproductor y autorradio.",
+      "container": "mp3",
+      "extension": "mp3",
+      "verified": true,
+      "video": { "codec": "none" },
+      "audio": { "codec": "libmp3lame", "bitrate": "192k" }
+    },
+    {
+      "id": "audio-mp3-vbr",
+      "label": "Audio · MP3 VBR (~190 kbps)",
+      "task": "extract-audio",
+      "description": "Mejor relación calidad/tamaño que CBR en música.",
+      "container": "mp3",
+      "extension": "mp3",
+      "verified": true,
+      "video": { "codec": "none" },
+      "audio": { "codec": "libmp3lame", "quality": "2" }
+    },
+    {
+      "id": "audio-opus-96",
+      "label": "Audio · Opus 96 kbps",
+      "task": "extract-audio",
+      "description": "Mejor calidad que MP3 a la mitad de bitrate; ideal para voz y podcast.",
+      "container": "opus",
+      "extension": "opus",
+      "verified": false,
+      "video": { "codec": "none" },
+      "audio": { "codec": "libopus", "bitrate": "96k" }
+    },
+    {
+      "id": "audio-copy",
+      "label": "Extraer audio sin recodificar",
+      "task": "extract-audio",
+      "description": "Sin pérdida y al instante; el contenedor debe admitir el códec original.",
+      "container": "auto",
+      "extension": "auto",
+      "verified": true,
+      "video": { "codec": "none" },
+      "audio": { "codec": "copy" }
+    },
+    {
+      "id": "gif-480-12fps",
+      "label": "GIF animado 480 px · 12 fps",
+      "task": "gif",
+      "description": "Paleta optimizada en una sola pasada de filtros.",
+      "container": "gif",
+      "extension": "gif",
+      "verified": true,
+      "video": { "codec": "gif" },
+      "audio": { "codec": "none" },
+      "filterChain": "fps=12,scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse",
+      "builderNotes": "filterChain se pasa íntegro a -vf (usa ; y [] del grafo)."
+    },
+    {
+      "id": "thumb-jpg-320",
+      "label": "Miniatura JPG · 320 px",
+      "task": "thumbnail",
+      "description": "Un único fotograma como imagen.",
+      "container": "image2",
+      "extension": "jpg",
+      "verified": true,
+      "video": { "codec": "mjpeg", "maxWidth": 320 },
+      "audio": { "codec": "none" },
+      "extraArgs": ["-frames:v", "1", "-update", "1", "-q:v", "3"],
+      "builderNotes": "-update 1 es obligatorio para escribir un solo archivo con el muxer image2."
+    },
+    {
+      "id": "mov-prores422hq",
+      "label": "MOV · ProRes 422 HQ (edición)",
+      "task": "intermediate",
+      "description": "Intermedio de edición en alta calidad para DaVinci/Premiere.",
+      "container": "mov",
+      "extension": "mov",
+      "verified": false,
+      "video": { "codec": "prores_ks", "profile": 3, "pixFmt": "yuv422p10le" },
+      "audio": { "codec": "pcm_s16le" },
+      "builderNotes": "Perfiles prores_ks: 0 = proxy, 1 = LT, 2 = 422, 3 = 422 HQ, 4 = 4444."
+    },
+    {
+      "id": "normalize-loudness",
+      "label": "Normalizar volumen (EBU R128 −16 LUFS)",
+      "task": "normalize-audio",
+      "description": "Iguala el volumen percibido sin recodificar el vídeo.",
+      "container": "mp4",
+      "extension": "mp4",
+      "verified": true,
+      "video": { "codec": "copy" },
+      "audio": { "codec": "aac", "bitrate": "192k" },
+      "filterChain": "loudnorm=I=-16:TP=-1.5:LRA=11",
+      "filterKind": "af",
+      "builderNotes": "Para máxima precisión: primera pasada con print_format=json, leer measured_* y segunda pasada con linear=true."
+    },
+    {
+      "id": "concat-copy",
+      "label": "Unir · Copia directa (sin recodificar)",
+      "task": "concat",
+      "description": "Instantáneo y sin pérdida. Todos los clips deben compartir códec, resolución y formato de audio.",
+      "container": "mp4",
+      "concatMode": "copy",
+      "verified": true,
+      "video": { "codec": "copy" },
+      "audio": { "codec": "copy" },
+      "builderNotes": "Usa el demuxer concat con archivo de lista temporal; si los clips no coinciden, FFmpeg corta el proceso y la app propone Recomponer."
+    },
+    {
+      "id": "concat-reencode-1080p",
+      "label": "Unir · Recomponer a 1080p",
+      "task": "concat",
+      "description": "Admite clips de distinta resolución, fps o códec: los normaliza y los une en un lienzo común 1080p.",
+      "container": "mp4",
+      "concatMode": "reencode",
+      "verified": true,
+      "video": { "codec": "libx264", "crf": 21, "preset": "medium", "maxWidth": 1920, "maxHeight": 1080 },
+      "audio": { "codec": "aac", "bitrate": "160k" },
+      "builderNotes": "Escala con letterbox (force_original_aspect_ratio=decrease + pad), fija fps, normaliza audio a 48 kHz estéreo y añade silencio si un clip no tiene sonido."
+    }
+  ]
+}

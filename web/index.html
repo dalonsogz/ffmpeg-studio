@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FFmpeg Studio</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path d="M4 4h11l5 5v11H4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M10 9.5v5l4.5-2.5z" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>FFmpeg Studio</h1>
+        <span id="brandSub">Front-end de escritorio para FFmpeg</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <button id="hwChip" class="chip" title="Estado de la aceleración por hardware">
+        <span class="dot"></span><span id="hwText">Detectando…</span>
+      </button>
+      <button id="ffChip" class="chip" title="Versión de FFmpeg en uso">
+        <span class="dot"></span><span id="ffText">FFmpeg</span>
+      </button>
+      <button id="settingsBtn" class="icon-btn" title="Ajustes">⚙</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel files-panel">
+      <div class="panel-head">
+        <h2>Archivos</h2>
+        <span id="filesCount" class="muted">0</span>
+      </div>
+
+      <div id="dropzone" class="dropzone" role="button" tabindex="0">
+        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+          <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <p>Haz clic para elegir vídeos, audio o imágenes</p>
+        <button id="addFilesBtn" class="btn btn-ghost">Elegir archivos…</button>
+      </div>
+
+      <ul id="fileList" class="file-list"></ul>
+
+      <div class="panel-foot">
+        <button id="addFilesBtn2" class="btn btn-ghost btn-block">+ Añadir archivos</button>
+      </div>
+    </section>
+
+    <section class="panel config-panel">
+      <div class="panel-head">
+        <h2>Qué quieres hacer</h2>
+        <span id="selectedInfo" class="muted"></span>
+      </div>
+
+      <div class="tabs" id="taskTabs" role="tablist">
+        <button class="tab active" data-task="video" role="tab">Vídeo</button>
+        <button class="tab" data-task="audio" role="tab">Audio</button>
+        <button class="tab" data-task="gif" role="tab">GIF</button>
+        <button class="tab" data-task="image" role="tab">Imagen</button>
+        <button class="tab" data-task="concat" role="tab">Unir</button>
+        <button class="tab" data-task="subs" role="tab">Subs</button>
+        <button class="tab" data-task="sheet" role="tab">Hoja</button>
+        <button class="tab" data-task="capture" role="tab">Grabar</button>
+      </div>
+
+      <div class="scroll">
+        <div class="field">
+          <label for="preset">Perfil</label>
+          <select id="preset"><option value="">Personalizado</option></select>
+          <p id="presetDesc" class="hint">Elige un perfil para rellenar los ajustes, o configúralo a tu gusto.</p>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label for="container">Contenedor</label>
+            <select id="container"></select>
+          </div>
+          <div class="field" data-tasks="video concat subs">
+            <label for="vcodec">Códec de vídeo</label>
+            <select id="vcodec"></select>
+          </div>
+        </div>
+
+        <div class="field" data-tasks="concat">
+          <label for="concatMode">Modo de unión</label>
+          <select id="concatMode">
+            <option value="copy">Copia directa (rápida, sin recodificar)</option>
+            <option value="reencode">Recomponer (admite resoluciones distintas)</option>
+          </select>
+          <p class="hint">Los clips se unen en el orden de la lista: usa ↑ y ↓ para reordenarlos.</p>
+        </div>
+
+        <div class="grid-2" data-tasks="concat">
+          <div class="field">
+            <label for="concatTransition">Transición entre clips</label>
+            <select id="concatTransition">
+              <option value="none" selected>Corte directo</option>
+              <option value="fade">Fundido encadenado</option>
+            </select>
+          </div>
+          <div class="field" id="transitionDurationField">
+            <label for="transitionDuration">Duración del fundido</label>
+            <select id="transitionDuration">
+              <option value="0.5">0,5 s</option>
+              <option value="1" selected>1 s</option>
+              <option value="1.5">1,5 s</option>
+              <option value="2">2 s</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field" data-tasks="subs">
+          <label for="subsMode">Acción</label>
+          <select id="subsMode">
+            <option value="extract">Extraer a un archivo</option>
+            <option value="mux">Incrustar un archivo en el vídeo</option>
+            <option value="burn">Quemar en la imagen (permanente)</option>
+            <option value="edit">Editar textos y tiempos</option>
+          </select>
+        </div>
+
+        <div class="grid-2" data-tasks="subs">
+          <div class="field" id="subsTrackField">
+            <label for="subsTrack">Pista de subtítulos</label>
+            <select id="subsTrack"></select>
+          </div>
+          <div class="field" id="subsFormatField">
+            <label for="subsFormat">Formato de salida</label>
+            <select id="subsFormat">
+              <option value="srt">SubRip (.srt)</option>
+              <option value="ass">ASS (.ass)</option>
+              <option value="vtt">WebVTT (.vtt)</option>
+              <option value="sup">PGS/DVD (.sup)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field" id="subsFileField" data-tasks="subs">
+          <label>Archivo de subtítulos externo</label>
+          <div class="inline-actions">
+            <button id="subsFileBtn" class="btn btn-ghost btn-sm">Elegir archivo…</button>
+            <span id="subsFileLabel" class="hint">Ninguno</span>
+            <button id="subsFileClear" class="link-btn">Quitar</button>
+          </div>
+        </div>
+
+        <div class="inline-actions" id="subsEditorActions" data-tasks="subs">
+          <button id="subsEditBtn" class="btn btn-primary btn-sm">Abrir editor</button>
+          <button id="subsNewBtn" class="btn btn-ghost btn-sm">Nuevo subtítulo</button>
+        </div>
+
+        <div class="grid-2" id="subsMetaFields" data-tasks="subs">
+          <div class="field">
+            <label for="subsLanguage">Idioma</label>
+            <select id="subsLanguage"></select>
+          </div>
+          <div class="field">
+            <label for="subsTitle">Título de la pista</label>
+            <input id="subsTitle" type="text" placeholder="Opcional" spellcheck="false" />
+          </div>
+        </div>
+
+        <label class="switch" id="subsDefaultField" data-tasks="subs">
+          <input id="subsDefault" type="checkbox" />
+          <span>Marcar como pista predeterminada</span>
+        </label>
+
+        <div id="burnStyleBox" data-tasks="subs">
+          <div class="grid-2">
+            <div class="field">
+              <label for="burnFont">Fuente</label>
+              <select id="burnFont"></select>
+            </div>
+            <div class="field">
+              <label for="burnSize">Tamaño</label>
+              <select id="burnSize">
+                <option value="18">18</option>
+                <option value="24" selected>24</option>
+                <option value="30">30</option>
+                <option value="36">36</option>
+                <option value="48">48</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label for="burnColor">Color</label>
+              <select id="burnColor"></select>
+            </div>
+            <div class="field">
+              <label for="burnPosition">Posición</label>
+              <select id="burnPosition"></select>
+            </div>
+          </div>
+          <label class="switch">
+            <input id="burnBold" type="checkbox" />
+            <span>Negrita</span>
+          </label>
+        </div>
+
+        <div class="field" data-tasks="video concat subs">
+          <div class="label-row">
+            <label for="quality">Calidad</label>
+            <output id="qualityLabel" class="value-pill">21</output>
+          </div>
+          <input id="quality" type="range" min="1" max="40" step="1" value="21" />
+          <div class="scale-hints"><span>Archivos pequeños</span><span>Máxima calidad</span></div>
+        </div>
+
+        <div class="grid-2" data-tasks="video concat subs">
+          <div class="field">
+            <label for="vpreset">Velocidad de codificación</label>
+            <select id="vpreset"></select>
+          </div>
+          <div class="field">
+            <label for="resolution">Resolución máxima</label>
+            <select id="resolution">
+              <option value="0">Original (no reescalar)</option>
+              <option value="2160">4K · 2160p</option>
+              <option value="1440">2K · 1440p</option>
+              <option value="1080" selected>Full HD · 1080p</option>
+              <option value="720">HD · 720p</option>
+              <option value="480">SD · 480p</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2" data-tasks="video">
+          <div class="field">
+            <label for="speed">Velocidad de reproducción</label>
+            <select id="speed">
+              <option value="0.5">0,5× (mitad)</option>
+              <option value="0.75">0,75×</option>
+              <option value="1" selected>Normal</option>
+              <option value="1.25">1,25×</option>
+              <option value="1.5">1,5×</option>
+              <option value="2">2× (doble)</option>
+              <option value="4">4×</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="fps">Fotogramas por segundo</label>
+            <select id="fps">
+              <option value="0" selected>Original</option>
+              <option value="24">24 fps</option>
+              <option value="25">25 fps</option>
+              <option value="30">30 fps</option>
+              <option value="50">50 fps</option>
+              <option value="60">60 fps</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2" data-tasks="video audio concat">
+          <div class="field">
+            <label for="acodec">Audio</label>
+            <select id="acodec"></select>
+          </div>
+          <div class="field" data-tasks="video audio concat">
+            <label for="abitrate">Calidad de audio</label>
+            <select id="abitrate"></select>
+          </div>
+        </div>
+
+        <div class="field" data-tasks="capture">
+          <label for="captureSource">Qué grabar</label>
+          <select id="captureSource">
+            <option value="screen" selected>Pantalla completa</option>
+            <option value="window">Una ventana</option>
+            <option value="camera">Cámara / webcam</option>
+          </select>
+        </div>
+
+        <div class="field hidden" id="captureTitleField" data-tasks="capture">
+          <label for="captureTitle">Título de la ventana</label>
+          <input id="captureTitle" type="text" placeholder="Parte del título, por ejemplo «Documento»" spellcheck="false" />
+        </div>
+
+        <div class="field hidden" id="captureDeviceField" data-tasks="capture">
+          <label for="captureDevice">Dispositivo de cámara</label>
+          <input id="captureDevice" type="text" placeholder="Nombre exacto, por ejemplo «HD WebCam»" spellcheck="false" />
+        </div>
+
+        <div class="grid-2" data-tasks="capture">
+          <div class="field">
+            <label for="captureDuration">Duración</label>
+            <select id="captureDuration">
+              <option value="5">5 segundos</option>
+              <option value="10" selected>10 segundos</option>
+              <option value="15">15 segundos</option>
+              <option value="30">30 segundos</option>
+              <option value="60">60 segundos</option>
+              <option value="0">Hasta detener (cancelar)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="captureFps">Fotogramas por segundo</label>
+            <select id="captureFps">
+              <option value="15">15 fps</option>
+              <option value="30" selected>30 fps</option>
+              <option value="60">60 fps</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2" data-tasks="video">
+          <div class="field">
+            <label for="audioTrack">Pistas de audio</label>
+            <select id="audioTrack"></select>
+          </div>
+          <div class="field">
+            <label for="subtitleTrack">Subtítulos</label>
+            <select id="subtitleTrack"></select>
+          </div>
+        </div>
+
+        <div class="grid-2" data-tasks="gif">
+          <div class="field">
+            <label for="gifFps">Fotogramas por segundo</label>
+            <select id="gifFps">
+              <option value="10">10 fps</option>
+              <option value="12" selected>12 fps</option>
+              <option value="15">15 fps</option>
+              <option value="24">24 fps</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="gifWidth">Ancho</label>
+            <select id="gifWidth">
+              <option value="320">320 px</option>
+              <option value="480" selected>480 px</option>
+              <option value="640">640 px</option>
+              <option value="800">800 px</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2" data-tasks="image">
+          <div class="field">
+            <label for="imgTime">Fotograma (segundo)</label>
+            <input id="imgTime" type="number" min="0" step="0.1" value="1" />
+          </div>
+          <div class="field">
+            <label for="imgWidth">Ancho</label>
+            <select id="imgWidth">
+              <option value="320">320 px</option>
+              <option value="640">640 px</option>
+              <option value="1280" selected>1280 px</option>
+              <option value="1920">1920 px</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2" data-tasks="sheet">
+          <div class="field">
+            <label for="sheetCount">Fotogramas</label>
+            <select id="sheetCount">
+              <option value="4">4 (2×2)</option>
+              <option value="6">6 (3×2)</option>
+              <option value="9" selected>9 (3×3)</option>
+              <option value="12">12 (4×3)</option>
+              <option value="16">16 (4×4)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="sheetWidth">Ancho por fotograma</label>
+            <select id="sheetWidth">
+              <option value="320">320 px</option>
+              <option value="480" selected>480 px</option>
+              <option value="640">640 px</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field" data-tasks="video audio gif">
+          <label class="switch">
+            <input id="trimEnabled" type="checkbox" />
+            <span>Recortar un fragmento</span>
+          </label>
+        </div>
+
+        <div id="trimBox" class="trim-box hidden">
+          <div class="grid-3">
+            <div class="field">
+              <label for="trimStart">Inicio</label>
+              <input id="trimStart" type="text" value="00:00:00.000" spellcheck="false" />
+            </div>
+            <div class="field">
+              <label for="trimEnd">Fin</label>
+              <input id="trimEnd" type="text" value="00:00:10.000" spellcheck="false" />
+            </div>
+            <div class="field">
+              <label for="trimMode">Modo</label>
+              <select id="trimMode">
+                <option value="exact">Exacto (recodifica)</option>
+                <option value="fast">Rápido (sin recodificar)</option>
+              </select>
+            </div>
+          </div>
+          <div class="inline-actions">
+            <button id="trimAllBtn" class="link-btn">Usar todo el vídeo</button>
+            <span id="trimHint" class="hint"></span>
+          </div>
+        </div>
+
+        <details class="advanced">
+          <summary>Opciones avanzadas</summary>
+          <div class="advanced-body">
+            <label class="switch" data-tasks="video audio">
+              <input id="normalizeLoudness" type="checkbox" />
+              <span>Normalizar volumen (EBU R128)</span>
+            </label>
+            <div class="field hidden" id="loudnessField" data-tasks="video audio">
+              <label for="loudnessTarget">Sonoridad objetivo</label>
+              <select id="loudnessTarget">
+                <option value="-14">-14 LUFS (streaming)</option>
+                <option value="-16" selected>-16 LUFS (podcast, voz)</option>
+                <option value="-23">-23 LUFS (difusión EBU)</option>
+              </select>
+            </div>
+
+            <label class="switch" data-tasks="video">
+              <input id="twoPass" type="checkbox" />
+              <span>Dos pasadas (tamaño más predecible)</span>
+            </label>
+            <div class="field" data-tasks="video">
+              <label for="qualityMode">Modo de calidad</label>
+              <select id="qualityMode">
+                <option value="crf">Calidad constante (recomendado)</option>
+                <option value="bitrate">Bitrate objetivo</option>
+              </select>
+            </div>
+            <div class="field hidden" id="bitrateField" data-tasks="video">
+              <label for="videoBitrate">Bitrate de vídeo</label>
+              <select id="videoBitrate">
+                <option value="1M">1 Mbps</option>
+                <option value="2M" selected>2 Mbps</option>
+                <option value="4M">4 Mbps</option>
+                <option value="8M">8 Mbps</option>
+                <option value="16M">16 Mbps</option>
+              </select>
+            </div>
+
+            <div class="divider" data-tasks="video"></div>
+
+            <div class="grid-2" data-tasks="video">
+              <div class="field">
+                <label for="rotate">Rotar</label>
+                <select id="rotate">
+                  <option value="0" selected>Sin rotación</option>
+                  <option value="90">90° derecha</option>
+                  <option value="180">180°</option>
+                  <option value="270">90° izquierda</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="flip">Voltear</label>
+                <select id="flip">
+                  <option value="none" selected>No voltear</option>
+                  <option value="h">Horizontal</option>
+                  <option value="v">Vertical</option>
+                  <option value="both">Ambos</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field" data-tasks="video">
+              <label>Recortar bordes (píxeles)</label>
+              <div class="grid-4">
+                <input id="cropLeft" type="number" min="0" step="1" placeholder="Izq." />
+                <input id="cropTop" type="number" min="0" step="1" placeholder="Arr." />
+                <input id="cropRight" type="number" min="0" step="1" placeholder="Der." />
+                <input id="cropBottom" type="number" min="0" step="1" placeholder="Aba." />
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details class="advanced" id="previewDetails">
+          <summary>Ver comando</summary>
+          <div class="advanced-body">
+            <pre id="commandPreview" class="command">Elige un archivo para ver el comando.</pre>
+            <button id="copyCmdBtn" class="btn btn-ghost btn-sm">Copiar comando</button>
+          </div>
+        </details>
+
+        <div id="issueList" class="issues"></div>
+      </div>
+
+      <div id="estimateInfo" class="estimate hidden"></div>
+
+      <div class="panel-foot config-foot">
+        <button id="outputDirBtn" class="btn btn-ghost" title="Carpeta donde se guardarán los resultados">
+          <span class="muted">Guardar en:</span> <span id="outputDirLabel">Junto al original</span>
+        </button>
+        <button id="enqueueBtn" class="btn btn-primary" disabled>Añadir a la cola</button>
+      </div>
+    </section>
+
+    <section class="panel queue-panel">
+      <div class="panel-head">
+        <h2>Cola</h2>
+        <div class="queue-actions">
+          <button id="pauseBtn" class="icon-btn" title="Pausar cola">⏸</button>
+          <button id="clearBtn" class="icon-btn" title="Limpiar terminados">✦</button>
+        </div>
+      </div>
+
+      <div id="queueList" class="queue-list">
+        <div class="empty">
+          <p>Los trabajos aparecerán aquí.</p>
+          <span class="muted">Se procesan de uno en uno para no saturar el equipo.</span>
+        </div>
+      </div>
+
+      <div class="log-panel">
+        <div class="log-head">
+          <span id="logTitle">Registro</span>
+          <button id="copyLogBtn" class="link-btn">Copiar</button>
+        </div>
+        <pre id="logOutput" class="log">Sin actividad todavía.</pre>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="modalTitle">Ajustes</h3>
+        <button id="modalClose" class="icon-btn">✕</button>
+      </div>
+      <div id="modalBody" class="modal-body"></div>
+    </div>
+  </div>
+
+  <div id="editor" class="modal hidden">
+    <div class="editor-card">
+      <div class="modal-head">
+        <h3>Editor de subtítulos <span id="editorFile" class="hint"></span></h3>
+        <button id="editorClose" class="icon-btn" title="Cerrar">✕</button>
+      </div>
+      <div class="editor-toolbar">
+        <button id="cueAdd" class="btn btn-ghost btn-sm">+ Añadir subtítulo</button>
+        <button id="editorSave" class="btn btn-primary btn-sm">Guardar</button>
+        <button id="editorSaveAs" class="btn btn-ghost btn-sm">Guardar como…</button>
+        <span id="editorStats" class="hint"></span>
+      </div>
+      <div id="editorError" class="error-line"></div>
+      <div id="editorList" class="editor-list"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
