@@ -13,6 +13,10 @@ if (-not (Test-Path (Join-Path $dist "FFmpegStudio.exe"))) {
     throw "No existe dist\FFmpegStudio\FFmpegStudio.exe. Ejecuta build.bat primero."
 }
 
+# NSIS no crea la carpeta de salida; Inno Setup sí. La aseguramos para ambos.
+$outputDir = Join-Path $PSScriptRoot "Output"
+New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
+
 function Find-Tool([string[]]$candidates) {
     return $candidates | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
 }
