@@ -201,7 +201,14 @@ class SubtitleIntegrationTests(unittest.TestCase):
         self.assertTrue(self.runner.run_job(job_id="extract", commands=extract["commands"], duration=None)["ok"])
         with open(extracted, encoding="utf-8") as handle:
             text = handle.read()
-        self.assertIn("Subtitulo de prueba FFmpeg", text)
+
+        with open(SUBS, encoding="utf-8-sig", errors="replace") as handle:
+            expected_lines = [
+                line.strip() for line in handle.read().splitlines()
+                if line.strip() and "-->" not in line and not line.strip().isdigit()
+            ]
+        self.assertTrue(expected_lines, "El SRT de muestra no tiene texto")
+        self.assertIn(expected_lines[0], text)
 
     def test_burn_produces_clean_video(self):
         output = os.path.join(self.work, "quemado.mp4")

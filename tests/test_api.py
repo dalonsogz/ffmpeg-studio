@@ -106,7 +106,8 @@ class ApiTests(unittest.TestCase):
 
         self.assertEqual(status, "done", self.api.queue_state()["jobs"][-1].get("error"))
         media = probe_file(self.api.ffprobe, job["output"])
-        self.assertLess(abs(media["duration"] - 6.0), 0.8)
+        expected = self.media["duration"] * 2
+        self.assertLess(abs(media["duration"] - expected), 0.8)
 
     def test_concat_preview_reports_single_clip(self):
         result = self.api.preview([SAMPLE], default_options(task="concat", concatMode="copy"))
