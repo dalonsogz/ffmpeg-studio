@@ -329,10 +329,3 @@ Para añadir uno nuevo basta con copiar un bloque y cambiar los valores; aparece
 - La unión por copia directa no admite clips con parámetros distintos ni puede inventar audio;
   para esos casos está el modo Recomponer.
 
----
-
-## Nota sobre la licencia
-
-La build de FFmpeg incluida es **GPLv3** (usa `libx264`/`libx265`). Si distribuyes la app junto con
-ese binario, las obligaciones GPL aplican al conjunto; si prefieres evitarlo, distribuye la app sin
-FFmpeg y deja que el usuario lo instale, o usa una build LGPL (sin x264/x265).
