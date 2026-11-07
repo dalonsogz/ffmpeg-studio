@@ -74,6 +74,14 @@ pip install -r requirements.txt
 La app busca FFmpeg en este orden: ajuste guardado → `..\ffmpeg-master-latest-win64-gpl\bin\`
 → `.\ffmpeg\bin\` → `PATH`. También puedes elegirlo desde **⚙ Ajustes**.
 
+Comprueba de una vez el entorno (unidad, `%TEMP%`, FFmpeg, dependencias e instalador):
+
+```bat
+powershell -ExecutionPolicy Bypass -File tools\check-env.ps1
+```
+
+Añade `-Strict` para que cualquier aviso también devuelva código de error (útil en un *hook* o CI).
+
 ---
 
 ## Cómo se ejecuta
