@@ -53,10 +53,10 @@ if exist "%FFMPEG_DIR%\ffmpeg.exe" (
 
 echo.
 echo Listo: %FFGUI_DISTPATH%\FFmpegStudio\FFmpegStudio.exe
-echo (El ejecutable de build\ es intermedio y no funciona: no lo abras.)
 
 rem PyInstaller deja un .exe intermedio en build\ sin sus DLL; se elimina para evitar confusiones.
 if exist "build" rmdir /s /q "build" >nul 2>&1
+pause
 exit /b 0
 
 :error
