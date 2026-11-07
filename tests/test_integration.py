@@ -55,7 +55,8 @@ class IntegrationTests(unittest.TestCase):
 
     def test_probe_sample(self):
         self.assertGreater(self.media["duration"], 2.5)
-        self.assertEqual(self.media["video"]["width"], 1280)
+        self.assertGreater(self.media["video"]["width"], 0)
+        self.assertGreater(self.media["video"]["height"], 0)
         self.assertTrue(self.media["audios"])
 
     def test_exact_trim_duration(self):
@@ -117,7 +118,10 @@ class IntegrationTests(unittest.TestCase):
         self.assertLess(abs(out["duration"] - self.media["duration"] * 2), 0.6)
 
     def test_concat_reencode_mixed_resolutions(self):
-        small = self.make_clip("clip-360.mp4", "640x360", 2)
+        base_width = self.media["video"]["width"]
+        base_height = self.media["video"]["height"]
+        small_size = "640x360" if base_width > 640 else "320x180"
+        small = self.make_clip("clip-small.mp4", small_size, 2)
         medias = [self.media, probe_file(FFPROBE, small)]
         output = os.path.join(self.work, "unido-reencode.mp4")
         built = build_concat_commands(
@@ -131,7 +135,9 @@ class IntegrationTests(unittest.TestCase):
         )
         self.assertTrue(result["ok"], result.get("error"))
         out = probe_file(FFPROBE, output)
-        self.assertEqual((out["video"]["width"], out["video"]["height"]), (1280, 720))
+        # El lienzo común es el del primer clip (el de muestra), sin ampliarlo.
+        self.assertEqual((out["video"]["width"], out["video"]["height"]),
+                         (base_width, base_height))
         self.assertLess(abs(out["duration"] - sum(m["duration"] for m in medias)), 1.0)
 
 

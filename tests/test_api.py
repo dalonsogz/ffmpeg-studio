@@ -10,6 +10,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import Api  # noqa: E402
+from core.command import compute_scale  # noqa: E402
 from core.options import default_options  # noqa: E402
 from core.probe import probe_file  # noqa: E402
 
@@ -31,6 +32,7 @@ class ApiTests(unittest.TestCase):
                       enable_hardware_detection=False)
         if not cls.api.ffmpeg:
             raise unittest.SkipTest("FFmpeg no encontrado")
+        cls.media = probe_file(cls.api.ffprobe, SAMPLE)
 
     @classmethod
     def tearDownClass(cls):
@@ -44,10 +46,12 @@ class ApiTests(unittest.TestCase):
         self.assertTrue(payload["presets"])
 
     def test_preview_command(self):
-        result = self.api.preview(SAMPLE, default_options(maxWidth=640, maxHeight=360))
+        expected_scale = compute_scale(self.media, 320, 180)
+        result = self.api.preview(SAMPLE, default_options(maxWidth=320, maxHeight=180))
         self.assertTrue(result["ok"], result.get("issues"))
         self.assertIn("-c:v libx264", result["preview"])
-        self.assertIn("scale=640:360", result["preview"])
+        self.assertIsNotNone(expected_scale)
+        self.assertIn(expected_scale, result["preview"])
         self.assertFalse([i for i in result["issues"] if i["level"] == "error"])
 
     def test_preview_reports_blocking_error(self):

@@ -44,9 +44,15 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path ..\.probe\media | Out-Null
-          & tools\ffmpeg\bin\ffmpeg.exe -y -f lavfi -i testsrc2=size=640x360:rate=30 `
-            -f lavfi -i sine=frequency=440:sample_rate=48000 -t 3 `
+          & tools\ffmpeg\bin\ffmpeg.exe -y -f lavfi -i testsrc2=size=1280x720:rate=30 `
+            -f lavfi -i sine=frequency=440:sample_rate=48000 -t 4 `
             -c:v libx264 -pix_fmt yuv420p -c:a aac ..\.probe\media\base.mp4
+          $subs = @"
+          1
+          00:00:00,500 --> 00:00:02,000
+          Subtítulo de prueba.
+          "@
+          Set-Content -Path ..\.probe\media\subs.srt -Value $subs -Encoding utf8
 
       - name: Comprobar el JavaScript
         run: node --check web/app.js
