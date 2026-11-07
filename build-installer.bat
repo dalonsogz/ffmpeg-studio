@@ -1,0 +1,4 @@
+
+powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1 -Version 1.0.1
+
+pause
